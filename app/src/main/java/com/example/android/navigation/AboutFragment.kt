@@ -21,11 +21,25 @@ import androidx.fragment.app.Fragment
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.platform.ComposeView
 
 class AboutFragment : Fragment() {
-    override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?,
-                              savedInstanceState: Bundle?): View? {
-        // Inflate the layout for this fragment
-        return inflater.inflate(R.layout.fragment_about, container, false)
+    override fun onCreateView(
+        inflater: LayoutInflater, container: ViewGroup?,
+        savedInstanceState: Bundle?
+    ): View {
+        // TODO : rewrite with compose
+        return ComposeView(requireContext()).apply {
+            setContent {
+                MyComposeContent()
+            }
+        }
+    }
+
+    @Composable
+    fun MyComposeContent() {
+        // TODO : rewrite fragment_about with compose
+        // Your Compose UI code goes here
     }
 }
