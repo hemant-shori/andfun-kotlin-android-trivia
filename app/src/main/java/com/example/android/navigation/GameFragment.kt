@@ -22,13 +22,38 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.selection.selectable
+import androidx.compose.foundation.selection.selectableGroup
+import androidx.compose.material3.Button
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.RadioButton
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.ComposeView
+import androidx.compose.ui.res.dimensionResource
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.res.vectorResource
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.tooling.preview.Preview
+import com.example.android.navigation.ui.theme.AndroidTriviaTheme
 
 class GameFragment : Fragment() {
     data class Question(
-        val text: String,
-        val answers: List<String>
+        val text: String, val answers: List<String>
     )
 
     // The first answer is the correct one.  We randomize the answers before showing the text.
@@ -38,120 +63,172 @@ class GameFragment : Fragment() {
         Question(
             text = "What is Android Jetpack?",
             answers = listOf("all of these", "tools", "documentation", "libraries")
-        ),
-        Question(
+        ), Question(
             text = "Base class for Layout?",
             answers = listOf("ViewGroup", "ViewSet", "ViewCollection", "ViewRoot")
-        ),
-        Question(
+        ), Question(
             text = "Layout for complex Screens?",
             answers = listOf("ConstraintLayout", "GridLayout", "LinearLayout", "FrameLayout")
-        ),
-        Question(
+        ), Question(
             text = "Pushing structured data into a Layout?",
             answers = listOf("Data Binding", "Data Pushing", "Set Text", "OnClick")
-        ),
-        Question(
+        ), Question(
             text = "Inflate layout in fragments?",
             answers = listOf("onCreateView", "onViewCreated", "onCreateLayout", "onInflateLayout")
-        ),
-        Question(
+        ), Question(
             text = "Build system for Android?",
             answers = listOf("Gradle", "Graddle", "Grodle", "Groyle")
-        ),
-        Question(
-            text = "Android vector format?",
-            answers = listOf(
-                "VectorDrawable",
-                "AndroidVectorDrawable",
-                "DrawableVector",
-                "AndroidVector"
+        ), Question(
+            text = "Android vector format?", answers = listOf(
+                "VectorDrawable", "AndroidVectorDrawable", "DrawableVector", "AndroidVector"
             )
-        ),
-        Question(
+        ), Question(
             text = "Android Navigation Component?",
             answers = listOf("NavController", "NavCentral", "NavMaster", "NavSwitcher")
-        ),
-        Question(
+        ), Question(
             text = "Registers app with launcher?",
             answers = listOf("intent-filter", "app-registry", "launcher-registry", "app-launcher")
-        ),
-        Question(
+        ), Question(
             text = "Mark a layout for Data Binding?",
             answers = listOf("<layout>", "<binding>", "<data-binding>", "<dbinding>")
         )
     )
 
-    lateinit var currentQuestion: Question
-    lateinit var answers: MutableList<String>
+    private lateinit var currentQuestion: Question
+    private lateinit var answers: MutableList<String>
     private var questionIndex = 0
     private val numQuestions = Math.min((questions.size + 1) / 2, 3)
 
     override fun onCreateView(
-        inflater: LayoutInflater, container: ViewGroup?,
-        savedInstanceState: Bundle?
+        inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?
     ): View {
-        // cre
+        // Shuffles the questions and sets the question index to the first question.
+        randomizeQuestions()
+
         return ComposeView(requireContext()).apply {
             setContent {
-                MyComposeContent()
+
+                AndroidTriviaTheme {
+                    // A surface container using the 'background' color from the theme
+                    Surface(
+                        modifier = Modifier.fillMaxSize(),
+                        color = MaterialTheme.colorScheme.background
+                    ) {
+                        GameContent()
+                    }
+                }
             }
         }
     }
 
     @Composable
-    fun MyComposeContent() {
-        // TODO : rewrite fragment_game with compose
-        // Your Compose UI code goes here
-    }
+    fun GameContent() {
+        val mutableCurrentQuestion = remember {
+            mutableStateOf(currentQuestion)
+        }
 
-    /*     TODO rewrite with compose
-    fun onCreateView1(inflater: LayoutInflater, container: ViewGroup?,
-                              savedInstanceState: Bundle?): View? {
+        val selectedAnswer = remember { mutableStateOf("") }
 
-        // Inflate the layout for this fragment
-        val binding = DataBindingUtil.inflate<FragmentGameBinding>(
-                inflater, R.layout.fragment_game, container, false)
+        Column {
+            Image(
+                imageVector = ImageVector.vectorResource(id = R.drawable.android_category_simple),
+                contentDescription = "",
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(
+                        top = dimensionResource(id = R.dimen.vertical_margin),
+                        start = dimensionResource(id = R.dimen.horizontal_margin),
+                        end = dimensionResource(id = R.dimen.horizontal_margin)
+                    )
+                    .height(dimensionResource(id = R.dimen.image_header_height))
+            )
 
-        // Shuffles the questions and sets the question index to the first question.
-        randomizeQuestions()
+            val commonModifier = Modifier
+                .padding(
+                    top = dimensionResource(id = R.dimen.horizontal_margin),
+                    start = dimensionResource(id = R.dimen.question_horizontal_margin),
+                    end = dimensionResource(id = R.dimen.question_horizontal_margin)
+                )
+            Text(
+                text = mutableCurrentQuestion.value.text,
+                style = MaterialTheme.typography.titleLarge,
+                modifier = commonModifier
+            )
+            Column(
+                modifier = commonModifier
+                    .fillMaxWidth()
+                    .selectableGroup(),
+            ) {
 
-        // Bind this fragment class to the layout
-        binding.game = this
+                mutableCurrentQuestion.value.answers.forEach { option ->
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .selectable(
+                                selected = option == selectedAnswer.value,
+                                role = Role.RadioButton,
+                                onClick = {
+                                    selectedAnswer.value = option
+                                }
+                            )
+                    ) {
+                        RadioButton(
+                            selected = option == selectedAnswer.value,
+                            onClick = null, // null recommended for accessibility with screen readers
+                            modifier = Modifier
+                                .padding(dimensionResource(id = R.dimen.horizontal_margin))
 
-        // Set the onClickListener for the submitButton
-        binding.submitButton.setOnClickListener @Suppress("UNUSED_ANONYMOUS_PARAMETER")
-        { view: View ->
-            val checkedId = binding.questionRadioGroup.checkedRadioButtonId
-            // Do nothing if nothing is checked (id == -1)
-            if (-1 != checkedId) {
-                var answerIndex = 0
-                when (checkedId) {
-                    R.id.secondAnswerRadioButton -> answerIndex = 1
-                    R.id.thirdAnswerRadioButton -> answerIndex = 2
-                    R.id.fourthAnswerRadioButton -> answerIndex = 3
-                }
-                // The first answer in the original question is always the correct one, so if our
-                // answer matches, we have the correct answer.
-                if (answers[answerIndex] == currentQuestion.answers[0]) {
-                    questionIndex++
-                    // Advance to the next question
-                    if (questionIndex < numQuestions) {
-                        currentQuestion = questions[questionIndex]
-                        setQuestion()
-                        binding.invalidateAll()
-                    } else {
-                        // We've won!  Navigate to the gameWonFragment.
+                        )
+                        Text(
+                            text = option,
+                            modifier = Modifier
+                                .padding(dimensionResource(id = R.dimen.horizontal_margin))
+                        )
                     }
-                } else {
-                    // Game over! A wrong answer sends us to the gameOverFragment.
+                }
+                Button(
+                    modifier = commonModifier.align(alignment = Alignment.CenterHorizontally),
+                    onClick = { submitButtOnClickListener(selectedAnswer) },
+                ) {
+                    Text(text = stringResource(id = R.string.submit_button))
                 }
             }
         }
-        return binding.root
     }
 
-     */
+    private fun submitButtOnClickListener(selectedAnswer: MutableState<String>) {
+        if (!selectedAnswer.equals("")) {
+            // The first answer in the original question is always the correct one, so if our
+            // answer matches, we have the correct answer.
+            if (selectedAnswer.value == currentQuestion.answers[0]) {
+                questionIndex++
+                // Advance to the next question
+                if (questionIndex < numQuestions) {
+                    currentQuestion = questions[questionIndex]
+                    setQuestion()
+                } else {
+                    // We've won!  Navigate to the gameWonFragment.
+                }
+            } else {
+                // Game over! A wrong answer sends us to the gameOverFragment.
+            }
+        }
+    }
+
+    @Preview(showBackground = true)
+    @Composable
+    fun GameOverPreview() {
+        AndroidTriviaTheme {
+            // A surface container using the 'background' color from the theme
+            Surface(
+                modifier = Modifier.fillMaxSize(),
+                color = MaterialTheme.colorScheme.background
+            ) {
+                GameContent()
+            }
+        }
+    }
 
     // randomize the questions and set the first question
     private fun randomizeQuestions() {
@@ -168,9 +245,8 @@ class GameFragment : Fragment() {
         answers = currentQuestion.answers.toMutableList()
         // and shuffle them
         answers.shuffle()
-        /*     TODO rewrite with compose
-            (activity as AppCompatActivity).supportActionBar?.title =
-                getString(R.string.title_android_trivia_question, questionIndex + 1, numQuestions)
-         */
+        // Updating the MainActivity screenTitle which is used as TopAppBar title
+        MainActivity.screenTitle =
+            getString(R.string.title_android_trivia_question, questionIndex + 1, numQuestions)
     }
 }
