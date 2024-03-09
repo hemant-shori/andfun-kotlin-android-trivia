@@ -1,5 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
-<!--
+<?xml version="1.0" encoding="utf-8"?><!--
   ~ Copyright 2018, The Android Open Source Project
   ~
   ~ Licensed under the Apache License, Version 2.0 (the "License");
@@ -15,11 +14,12 @@
   ~ limitations under the License.
   -->
 
-<resources>
-    <color name="colorPrimary">#008577</color>
-    <color name="colorPrimaryDark">#00574B</color>
-    <color name="colorAccent">#7e53c5</color>
-    <color name="youWinDark">#35A571</color>
-    <color name="youWinBackground">#B7F8C9</color>
-    <color name="gameOverBackground">#f8bbd0</color>
-</resources>
+<set xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <translate
+        android:duration="@android:integer/config_shortAnimTime"
+        android:fromXDelta="0%"
+        android:fromYDelta="0%"
+        android:toXDelta="-100%"
+        android:toYDelta="0%" />
+</set>
