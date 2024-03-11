@@ -28,6 +28,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Button
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -35,7 +36,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.ComposeView
-import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.res.vectorResource
@@ -45,8 +45,7 @@ import androidx.compose.ui.unit.sp
 import androidx.fragment.app.Fragment
 import com.example.android.navigation.ui.theme.AndroidTriviaTheme
 
-
-class GameWonFragment : Fragment() {
+class GameTitleFragment : Fragment() {
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
@@ -54,55 +53,60 @@ class GameWonFragment : Fragment() {
         return ComposeView(requireContext()).apply {
             setContent {
                 AndroidTriviaTheme {
-                    GameWonContent()
+                    GameTitleContent()
                 }
             }
         }
     }
 
-    @Composable
-    fun GameWonContent() {
-        // A surface container using the 'background' color from the theme
-        Surface(
-            modifier = Modifier.fillMaxSize(),
-            color = colorResource(id = R.color.youWinBackground)
-        ) {
-            Column(
-                verticalArrangement = Arrangement.SpaceAround,
+    // TODO Convert GameTitleContent to a member function after adding navigation support
+    companion object {
+        @Composable
+        fun GameTitleContent() {
+            // A surface container using the 'background' color from the theme
+            Surface(
+                modifier = Modifier.fillMaxSize(),
+                color = MaterialTheme.colorScheme.background
             ) {
-                val commonModifier = Modifier
-                    .padding(
-                        top = dimensionResource(id = R.dimen.vertical_margin),
-                        start = dimensionResource(id = R.dimen.horizontal_margin),
-                        end = dimensionResource(id = R.dimen.horizontal_margin)
-                    )
-                Image(
-                    imageVector = ImageVector.vectorResource(id = R.drawable.you_win),
-                    contentDescription = "",
-                    modifier = commonModifier
-                        .fillMaxWidth()
-                        .height(dimensionResource(id = R.dimen.game_over_height))
-                )
-                Button(
-                    onClick = { /*TODO*/ },
-                    modifier = commonModifier
-                        .align(alignment = Alignment.CenterHorizontally)
+                Column(
+                    verticalArrangement = Arrangement.SpaceAround,
                 ) {
-                    Text(
-                        text = stringResource(id = R.string.next_match),
-                        fontWeight = FontWeight.Bold,
-                        fontSize = dimensionResource(id = R.dimen.button_text_size).value.sp,
+                    val commonModifier = Modifier
+                        .padding(
+                            top = dimensionResource(id = R.dimen.vertical_margin),
+                            start = dimensionResource(id = R.dimen.horizontal_margin),
+                            end = dimensionResource(id = R.dimen.horizontal_margin)
+                        )
+                    Image(
+                        imageVector = ImageVector.vectorResource(id = R.drawable.android_trivia),
+                        contentDescription = "",
+                        modifier = commonModifier
+                            .fillMaxWidth()
+                            .height(dimensionResource(id = R.dimen.image_header_height))
                     )
+                    Button(
+                        onClick = { /*TODO*/ },
+                        modifier = commonModifier
+                            .align(alignment = Alignment.CenterHorizontally)
+                    ) {
+                        Text(
+                            text = stringResource(id = R.string.play),
+                            fontWeight = FontWeight.Bold,
+                            fontSize = dimensionResource(id = R.dimen.button_text_size).value.sp,
+                        )
+                    }
                 }
             }
         }
+
     }
 
     @Preview(showBackground = true)
     @Composable
-    fun GameWonPreview() {
+    fun GameTitlePreview() {
         AndroidTriviaTheme {
-            GameWonContent()
+            GameTitleContent()
         }
     }
+
 }

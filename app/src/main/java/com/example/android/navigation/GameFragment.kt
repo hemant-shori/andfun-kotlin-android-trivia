@@ -245,8 +245,8 @@ class GameFragment : Fragment() {
         answers = currentQuestion.answers.toMutableList()
         // and shuffle them
         answers.shuffle()
+        // TODO Fix top bar title in step 2 while adding support to navigation compose.
         // Updating the MainActivity screenTitle which is used as TopAppBar title
-        MainActivity.screenTitle =
-            getString(R.string.title_android_trivia_question, questionIndex + 1, numQuestions)
+        // MainActivity.screenTitle = getString(R.string.title_android_trivia_question, questionIndex + 1, numQuestions)
     }
 }
