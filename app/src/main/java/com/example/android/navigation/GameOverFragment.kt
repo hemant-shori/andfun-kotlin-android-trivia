@@ -67,7 +67,7 @@ class GameOverFragment : Fragment() {
             color = colorResource(id = R.color.gameOverBackground)
         ) {
             Column(
-                verticalArrangement = Arrangement.Center,
+                verticalArrangement = Arrangement.SpaceAround,
             ) {
                 val commonModifier = Modifier
                     .padding(

@@ -36,13 +36,6 @@ class MainActivity : ComponentActivity() {
         lateinit var screenTitle: String
     }
 
-    @Composable
-    fun Greeting(name: String) {
-        Text(
-            text = "Hello $name!"
-        )
-    }
-
     @OptIn(ExperimentalMaterial3Api::class)
     @Composable
     fun ScaffoldRootContent() {
@@ -70,7 +63,7 @@ class MainActivity : ComponentActivity() {
                         .padding(paddingValues),
                     color = MaterialTheme.colorScheme.background
                 ) {
-                    Greeting("Test")
+                    GameTitleFragment.GameTitleContent()
                 }
             }
         )
