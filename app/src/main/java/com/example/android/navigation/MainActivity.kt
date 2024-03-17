@@ -18,20 +18,20 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.MutableIntState
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableIntStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.example.android.navigation.ui.theme.AndroidTriviaTheme
+import com.example.android.navigation.viewmodels.GameViewModel
 
 /*
  * enum class to define the routes.
@@ -57,35 +57,39 @@ class MainActivity : ComponentActivity() {
 
     @Composable
     fun ScaffoldRootContent(
-        navigationController: NavHostController = rememberNavController()
+        navigationController: NavHostController = rememberNavController(),
+        viewModel: GameViewModel = viewModel()
     ) {
         val backStackEntry by navigationController.currentBackStackEntryAsState()
         val currentScreenTitle = TriviaAppScreens.valueOf(
             backStackEntry?.destination?.route ?: TriviaAppScreens.GameTitleScreen.name
         )
         val canNavigateBack = navigationController.previousBackStackEntry != null
-        val mutableQuestionNo = remember {
-            mutableIntStateOf(questionIndex)
-        }
         Scaffold(
             containerColor = MaterialTheme.colorScheme.secondary,
             topBar = {
+                val uiState by viewModel.uiState.collectAsState()
                 GameTopBar(
                     currentScreenTitle,
-                    mutableQuestionNo,
+                    uiState.questionIndex,
                     canNavigateBack,
                     navigateUp = { navigateToHomeScreen(navigationController) }
                 )
             },
             modifier = Modifier.background(color = Color.Yellow),
             content = { paddingValues ->
-                GameNavHost(navigationController, paddingValues)
+                GameNavHost(navigationController, viewModel, paddingValues)
             }
         )
     }
 
     @Composable
-    private fun GameNavHost(navigationController: NavHostController, paddingValues: PaddingValues) {
+    private fun GameNavHost(
+        navigationController: NavHostController,
+        viewModel: GameViewModel,
+        paddingValues: PaddingValues
+    ) {
+        val uiState by viewModel.uiState.collectAsState()
         NavHost(
             navController = navigationController,
             startDestination = TriviaAppScreens.GameTitleScreen.name,
@@ -96,33 +100,36 @@ class MainActivity : ComponentActivity() {
                 GameTitleContent(
                     onPlayButtonClicked = {
                         // Shuffles the questions and sets the question index to the first question.
-                        randomizeQuestions()
+                        viewModel.randomizeQuestions()
                         navigationController.navigate(TriviaAppScreens.GameScreen.name)
                     }
                 )
             }
             // Play Game Route
             composable(route = TriviaAppScreens.GameScreen.name) {
-                PlayGameContent(
-                    gameResultListener = { result ->
-                        if (result) {
-                            navigationController.navigate(TriviaAppScreens.GameWonScreen.name)
-                        } else {
-                            navigationController.navigate(TriviaAppScreens.GameOverScreen.name)
-                        }
+                val gameResultListener: (Boolean) -> Unit = { result ->
+                    if (result) {
+                        navigationController.navigate(TriviaAppScreens.GameWonScreen.name)
+                    } else {
+                        navigationController.navigate(TriviaAppScreens.GameOverScreen.name)
                     }
+                }
+                PlayGameScreen(
+                    onOptionSelected = { viewModel.setSelectedAnswer(it) },
+                    onSubmitButtonClicked = { viewModel.matchAnswer(gameResultListener) },
+                    uiState = uiState
                 )
             }
             // Game Win Route
             composable(route = TriviaAppScreens.GameWonScreen.name) {
                 GameWonScreen(
-                    nextMatchListener = { }
+                    nextMatchListener = { navigateToHomeScreen(navigationController) }
                 )
             }
             // Game Over Route
             composable(route = TriviaAppScreens.GameOverScreen.name) {
                 GameOverScreen(
-                    tryAgainListener = { }
+                    tryAgainListener = { navigateToHomeScreen(navigationController) }
                 )
             }
             // About Game Route
@@ -147,7 +154,7 @@ class MainActivity : ComponentActivity() {
     @Composable
     private fun GameTopBar(
         currentScreenTitle: TriviaAppScreens,
-        mutableQuestionNo: MutableIntState,
+        questionNo: Int,
         canNavigateBack: Boolean,
         navigateUp: () -> Unit
     ) {
@@ -156,7 +163,7 @@ class MainActivity : ComponentActivity() {
                 Text(
                     text = stringResource(
                         id = currentScreenTitle.title,
-                        formatArgs = arrayOf(mutableQuestionNo.intValue + 1, 3)
+                        formatArgs = arrayOf(questionNo + 1, 3)
                     )
                 )
             },

@@ -16,8 +16,6 @@
 
 package com.example.android.navigation
 
-
-import android.util.Log
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -33,9 +31,6 @@ import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.MutableState
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -43,64 +38,17 @@ import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.semantics.Role
-import kotlin.math.log
-
-data class Question(
-    val text: String, val answers: List<String>
-)
-
-// The first answer is the correct one.  We randomize the answers before showing the text.
-// All questions must have four answers.  We'd want these to contain references to string
-// resources so we could internationalize. (or better yet, not define the questions in code...)
-private val questions: MutableList<Question> = mutableListOf(
-    Question(
-        text = "What is Android Jetpack?",
-        answers = listOf("all of these", "tools", "documentation", "libraries")
-    ), Question(
-        text = "Base class for Layout?",
-        answers = listOf("ViewGroup", "ViewSet", "ViewCollection", "ViewRoot")
-    ), Question(
-        text = "Layout for complex Screens?",
-        answers = listOf("ConstraintLayout", "GridLayout", "LinearLayout", "FrameLayout")
-    ), Question(
-        text = "Pushing structured data into a Layout?",
-        answers = listOf("Data Binding", "Data Pushing", "Set Text", "OnClick")
-    ), Question(
-        text = "Inflate layout in fragments?",
-        answers = listOf("onCreateView", "onViewCreated", "onCreateLayout", "onInflateLayout")
-    ), Question(
-        text = "Build system for Android?",
-        answers = listOf("Gradle", "Graddle", "Grodle", "Groyle")
-    ), Question(
-        text = "Android vector format?", answers = listOf(
-            "VectorDrawable", "AndroidVectorDrawable", "DrawableVector", "AndroidVector"
-        )
-    ), Question(
-        text = "Android Navigation Component?",
-        answers = listOf("NavController", "NavCentral", "NavMaster", "NavSwitcher")
-    ), Question(
-        text = "Registers app with launcher?",
-        answers = listOf("intent-filter", "app-registry", "launcher-registry", "app-launcher")
-    ), Question(
-        text = "Mark a layout for Data Binding?",
-        answers = listOf("<layout>", "<binding>", "<data-binding>", "<dbinding>")
-    )
-)
-
-private lateinit var currentQuestion: Question
-private lateinit var answers: MutableList<String>
-internal var questionIndex = 0
-private val numQuestions = Math.min((questions.size + 1) / 2, 3)
-
+import androidx.compose.ui.tooling.preview.Preview
+import com.example.android.navigation.data.GameUiState
+import com.example.android.navigation.ui.theme.AndroidTriviaTheme
 
 @Composable
-fun PlayGameContent(gameResultListener: (Boolean) -> Unit) {
-    // TODO replace mutableCurrentQuestion with viewModel
-    val mutableCurrentQuestion = remember {
-        mutableStateOf(currentQuestion)
-    }
+fun PlayGameScreen(
+    onOptionSelected: (String) -> Unit,
+    onSubmitButtonClicked: () -> Unit,
+    uiState: GameUiState
+) {
 
-    val selectedAnswer = remember { mutableStateOf("") }
     // A surface container using the 'background' color from the theme
     Surface(
         modifier = Modifier.fillMaxSize(),
@@ -127,7 +75,7 @@ fun PlayGameContent(gameResultListener: (Boolean) -> Unit) {
                     end = dimensionResource(id = R.dimen.question_horizontal_margin)
                 )
             Text(
-                text = mutableCurrentQuestion.value.text,
+                text = uiState.currentQuestion.text,
                 style = MaterialTheme.typography.titleLarge,
                 modifier = commonModifier
             )
@@ -137,21 +85,19 @@ fun PlayGameContent(gameResultListener: (Boolean) -> Unit) {
                     .selectableGroup(),
             ) {
 
-                mutableCurrentQuestion.value.answers.forEach { option ->
+                uiState.answers.forEach { option ->
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
                         modifier = Modifier
                             .fillMaxWidth()
                             .selectable(
-                                selected = option == selectedAnswer.value,
+                                selected = option == uiState.selectedAnswer,
                                 role = Role.RadioButton,
-                                onClick = {
-                                    selectedAnswer.value = option
-                                }
+                                onClick = { onOptionSelected(option) }
                             )
                     ) {
                         RadioButton(
-                            selected = option == selectedAnswer.value,
+                            selected = option == uiState.selectedAnswer,
                             onClick = null, // null recommended for accessibility with screen readers
                             modifier = Modifier
                                 .padding(dimensionResource(id = R.dimen.horizontal_margin))
@@ -166,7 +112,7 @@ fun PlayGameContent(gameResultListener: (Boolean) -> Unit) {
                 }
                 Button(
                     modifier = commonModifier.align(alignment = Alignment.CenterHorizontally),
-                    onClick = { submitButtOnClickListener(selectedAnswer, gameResultListener) },
+                    onClick =  onSubmitButtonClicked,
                 ) {
                     Text(text = stringResource(id = R.string.submit_button))
                 }
@@ -175,43 +121,14 @@ fun PlayGameContent(gameResultListener: (Boolean) -> Unit) {
     }
 }
 
-private fun submitButtOnClickListener(
-    selectedAnswer: MutableState<String>,
-    gameResultListener: (Boolean) -> Unit
-) {
-    if (!selectedAnswer.equals("")) {
-        // The first answer in the original question is always the correct one, so if our
-        // answer matches, we have the correct answer.
-        if (selectedAnswer.value == currentQuestion.answers[0]) {
-            questionIndex++
-            // Advance to the next question
-            if (questionIndex < numQuestions) {
-                currentQuestion = questions[questionIndex]
-                setQuestion()
-            } else {
-                // We've won!  Navigate to the gameWonFragment.
-                gameResultListener(true)
-            }
-        } else {
-            gameResultListener(false)
-            // Game over! A wrong answer sends us to the gameOverFragment.
-        }
+@Preview(showBackground = true)
+@Composable
+fun PlayGameScreenPreview() {
+    AndroidTriviaTheme {
+        PlayGameScreen(
+            onSubmitButtonClicked = {},
+            onOptionSelected = {},
+            uiState = GameUiState()
+        )
     }
-}
-
-// randomize the questions and set the first question
-internal fun randomizeQuestions() {
-    questions.shuffle()
-    questionIndex = 0
-    setQuestion()
-}
-
-// Sets the question and randomizes the answers.  This only changes the data, not the UI.
-// Calling invalidateAll on the FragmentGameBinding updates the data.
-private fun setQuestion() {
-    currentQuestion = questions[questionIndex]
-    // randomize the answers into a copy of the array
-    answers = currentQuestion.answers.toMutableList()
-    // and shuffle them
-    answers.shuffle()
 }
