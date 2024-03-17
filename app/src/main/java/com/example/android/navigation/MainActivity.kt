@@ -73,6 +73,7 @@ class MainActivity : ComponentActivity() {
                     currentScreenTitle,
                     uiState.questionIndex,
                     canNavigateBack,
+                    // Add Support for the Up Button
                     navigateUp = { navigateToHomeScreen(navigationController) }
                 )
             },
@@ -174,6 +175,7 @@ class MainActivity : ComponentActivity() {
                 containerColor = MaterialTheme.colorScheme.secondary,
                 titleContentColor = MaterialTheme.colorScheme.onSecondary
             ),
+            // Add Support for navigation icon that is displayed at the start of the top app bar
             navigationIcon = {
                 if (canNavigateBack) {
                     IconButton(onClick = navigateUp) {
