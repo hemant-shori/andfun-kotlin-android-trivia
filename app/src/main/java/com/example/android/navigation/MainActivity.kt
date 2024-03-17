@@ -123,12 +123,14 @@ class MainActivity : ComponentActivity() {
             // Game Win Route
             composable(route = TriviaAppScreens.GameWonScreen.name) {
                 GameWonScreen(
+                    // Navigate back to title screen
                     nextMatchListener = { navigateToHomeScreen(navigationController) }
                 )
             }
             // Game Over Route
             composable(route = TriviaAppScreens.GameOverScreen.name) {
                 GameOverScreen(
+                    // Navigate back to title screen
                     tryAgainListener = { navigateToHomeScreen(navigationController) }
                 )
             }
@@ -144,6 +146,7 @@ class MainActivity : ComponentActivity() {
     }
 
     private fun navigateToHomeScreen(navigationController: NavHostController) {
+        // Pop back stack to the game title screen
         navigationController.popBackStack(
             route = TriviaAppScreens.GameTitleScreen.name,
             inclusive = false
