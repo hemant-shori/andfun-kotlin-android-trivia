@@ -39,6 +39,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.tooling.preview.Preview
+import com.example.android.navigation.data.DataSource
 import com.example.android.navigation.data.GameUiState
 import com.example.android.navigation.ui.theme.AndroidTriviaTheme
 
@@ -112,7 +113,7 @@ fun PlayGameScreen(
                 }
                 Button(
                     modifier = commonModifier.align(alignment = Alignment.CenterHorizontally),
-                    onClick =  onSubmitButtonClicked,
+                    onClick = onSubmitButtonClicked,
                 ) {
                     Text(text = stringResource(id = R.string.submit_button))
                 }
@@ -128,7 +129,10 @@ fun PlayGameScreenPreview() {
         PlayGameScreen(
             onSubmitButtonClicked = {},
             onOptionSelected = {},
-            uiState = GameUiState()
+            uiState = GameUiState(
+                currentQuestion = DataSource.questions[1],
+                answers = DataSource.questions[1].answers.toMutableList(),
+            )
         )
     }
 }
