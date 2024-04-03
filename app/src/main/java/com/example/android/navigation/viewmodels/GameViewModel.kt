@@ -11,7 +11,7 @@ import kotlinx.coroutines.flow.update
 class GameViewModel : ViewModel() {
     private val _uiState = MutableStateFlow(GameUiState())
     val uiState: StateFlow<GameUiState> = _uiState.asStateFlow()
-    private val numQuestions = Math.min((DataSource.questions.size + 1) / 2, 3)
+    val numQuestions = Math.min((DataSource.questions.size + 1) / 2, 3)
 
 
     // randomize the questions and set the first question
@@ -36,6 +36,15 @@ class GameViewModel : ViewModel() {
         }
     }
 
+    // update the question index.
+    private fun setQuestionIndex(questionIndex: Int) {
+        _uiState.update { currentState ->
+            currentState.copy(
+                questionIndex = questionIndex, // Save the current question index
+            )
+        }
+    }
+
     // Sets the question and randomizes the answers.
     fun setSelectedAnswer(selectedAnswer: String) {
         _uiState.update { currentState ->
@@ -55,12 +64,13 @@ class GameViewModel : ViewModel() {
                 if (nextIndex < numQuestions) {
                     setQuestion(nextIndex)
                 } else {
-                    // We've won!  Navigate to the gameWonFragment.
+                    setQuestionIndex(nextIndex)
+                    // We've won!  Navigate to the Game won screen.
                     gameResultListener(true)
                 }
             } else {
                 gameResultListener(false)
-                // Game over! A wrong answer sends us to the gameOverFragment.
+                // Game over! A wrong answer sends us to the Game over screen.
             }
         }
     }

@@ -1,6 +1,7 @@
 package com.example.android.navigation
 
 import android.os.Bundle
+import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.annotation.StringRes
@@ -121,6 +122,13 @@ class MainActivity : ComponentActivity() {
                     } else {
                         navigationController.navigate(TriviaAppScreens.GameOverScreen.name)
                     }
+                    // solution for exercise 07: Step.07.Exercise-Adding-Safe-Arguments
+                    Toast.makeText(
+                        applicationContext,
+                        "NumCorrect: ${viewModel.uiState.value.questionIndex}," +
+                                " NumQuestions: ${viewModel.numQuestions}",
+                        Toast.LENGTH_SHORT
+                    ).show()
                 }
                 PlayGameScreen(
                     onOptionSelected = { viewModel.setSelectedAnswer(it) },
