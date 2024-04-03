@@ -9,6 +9,9 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -20,6 +23,9 @@ import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
@@ -70,6 +76,7 @@ class MainActivity : ComponentActivity() {
             topBar = {
                 val uiState by viewModel.uiState.collectAsState()
                 GameTopBar(
+                    navigationController,
                     currentScreenTitle,
                     uiState.questionIndex,
                     canNavigateBack,
@@ -157,11 +164,13 @@ class MainActivity : ComponentActivity() {
     @OptIn(ExperimentalMaterial3Api::class)
     @Composable
     private fun GameTopBar(
+        navigationController: NavHostController,
         currentScreenTitle: TriviaAppScreens,
         questionNo: Int,
         canNavigateBack: Boolean,
         navigateUp: () -> Unit
     ) {
+        var showMenu by remember { mutableStateOf(false) }
         TopAppBar(
             title = {
                 Text(
@@ -184,6 +193,28 @@ class MainActivity : ComponentActivity() {
                             contentDescription = stringResource(id = R.string.back_button)
                         )
                     }
+                }
+            },
+            actions = {
+                IconButton(onClick = { showMenu = !showMenu }) {
+                    Icon(Icons.Default.MoreVert, contentDescription = "More")
+                }
+                DropdownMenu(
+                    expanded = showMenu,
+                    onDismissRequest = { showMenu = false }
+                ) {
+                    DropdownMenuItem(
+                        text = { Text(text = "About") },
+                        onClick = {
+                            navigationController.navigate(TriviaAppScreens.AboutGameScreen.name)
+                        }
+                    )
+                    DropdownMenuItem(
+                        text = { Text(text = "Rules") },
+                        onClick = {
+                            navigationController.navigate(TriviaAppScreens.GameRulesScreen.name)
+                        }
+                    )
                 }
             }
         )
