@@ -1,5 +1,6 @@
 package com.example.android.navigation
 
+import android.content.Intent
 import android.os.Bundle
 import android.widget.Toast
 import androidx.activity.ComponentActivity
@@ -11,6 +12,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.material.icons.filled.Share
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -77,12 +79,13 @@ class MainActivity : ComponentActivity() {
             topBar = {
                 val uiState by viewModel.uiState.collectAsState()
                 GameTopBar(
+                    viewModel.numQuestions,
                     navigationController,
                     currentScreenTitle,
                     uiState.questionIndex,
                     canNavigateBack,
                     // Add Support for the Up Button
-                    navigateUp = { navigateToHomeScreen(navigationController) }
+                    navigateUp = { navigateToHomeScreen(viewModel, navigationController) }
                 )
             },
             modifier = Modifier.background(color = Color.Yellow),
@@ -140,14 +143,14 @@ class MainActivity : ComponentActivity() {
             composable(route = TriviaAppScreens.GameWonScreen.name) {
                 GameWonScreen(
                     // Navigate back to title screen
-                    nextMatchListener = { navigateToHomeScreen(navigationController) }
+                    nextMatchListener = { navigateToHomeScreen(viewModel, navigationController) }
                 )
             }
             // Game Over Route
             composable(route = TriviaAppScreens.GameOverScreen.name) {
                 GameOverScreen(
                     // Navigate back to title screen
-                    tryAgainListener = { navigateToHomeScreen(navigationController) }
+                    tryAgainListener = { navigateToHomeScreen(viewModel, navigationController) }
                 )
             }
             // About Game Route
@@ -161,7 +164,13 @@ class MainActivity : ComponentActivity() {
         }
     }
 
-    private fun navigateToHomeScreen(navigationController: NavHostController) {
+    private fun navigateToHomeScreen(
+        viewModel: GameViewModel,
+        navigationController: NavHostController
+    ) {
+        // Hide the share button by shuffling the questions and sets the question
+        // index to the first question.
+        viewModel.randomizeQuestions()
         // Pop back stack to the game title screen
         navigationController.popBackStack(
             route = TriviaAppScreens.GameTitleScreen.name,
@@ -172,6 +181,7 @@ class MainActivity : ComponentActivity() {
     @OptIn(ExperimentalMaterial3Api::class)
     @Composable
     private fun GameTopBar(
+        numQuestions: Int,
         navigationController: NavHostController,
         currentScreenTitle: TriviaAppScreens,
         questionNo: Int,
@@ -204,6 +214,13 @@ class MainActivity : ComponentActivity() {
                 }
             },
             actions = {
+                if (numQuestions == questionNo) {
+                    IconButton(onClick = {
+                        shareSuccess(numQuestions, questionNo)
+                    }) {
+                        Icon(Icons.Default.Share, contentDescription = "Share")
+                    }
+                }
                 IconButton(onClick = { showMenu = !showMenu }) {
                     Icon(Icons.Default.MoreVert, contentDescription = "More")
                 }
@@ -226,6 +243,17 @@ class MainActivity : ComponentActivity() {
                 }
             }
         )
+    }
+
+    // Starting an Activity with our new Intent
+    private fun shareSuccess(numQuestions: Int, numCorrect: Int) {
+        val shareIntent = Intent(Intent.ACTION_SEND)
+        shareIntent.setType("text/plain")
+            .putExtra(
+                Intent.EXTRA_TEXT,
+                getString(R.string.share_success_text, numCorrect, numQuestions)
+            )
+        startActivity(shareIntent)
     }
 
     @Preview(showBackground = true)
