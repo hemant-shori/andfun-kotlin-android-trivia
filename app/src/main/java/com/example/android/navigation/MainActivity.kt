@@ -6,6 +6,10 @@ import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.annotation.StringRes
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.PaddingValues
@@ -90,11 +94,15 @@ class MainActivity : ComponentActivity() {
         viewModel: GameViewModel = viewModel()
     ) {
         val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
+        val backStackEntry by navigationController.currentBackStackEntryAsState()
         ModalNavigationDrawer(
             drawerContent = {
                 DrawerContent(drawerState, navigationController)
             },
             drawerState = drawerState,
+            gesturesEnabled = backStackEntry?.destination?.route.equals(
+                TriviaAppScreens.GameTitleScreen.name
+            )
         ) {
             ScaffoldContent(navigationController, viewModel, drawerState)
         }
@@ -161,11 +169,6 @@ class MainActivity : ComponentActivity() {
         viewModel: GameViewModel,
         drawerState: DrawerState
     ) {
-        val backStackEntry by navigationController.currentBackStackEntryAsState()
-        val currentScreenTitle = TriviaAppScreens.valueOf(
-            backStackEntry?.destination?.route ?: TriviaAppScreens.GameTitleScreen.name
-        )
-        val canNavigateBack = navigationController.previousBackStackEntry != null
         Scaffold(
             containerColor = MaterialTheme.colorScheme.secondary,
             topBar = {
@@ -173,9 +176,7 @@ class MainActivity : ComponentActivity() {
                 GameTopBar(
                     viewModel.numQuestions,
                     navigationController,
-                    currentScreenTitle,
                     uiState.questionIndex,
-                    canNavigateBack,
                     // Add Support for the Up Button
                     navigateUp = { navigateToHomeScreen(viewModel, navigationController) },
                     drawerState
@@ -211,7 +212,10 @@ class MainActivity : ComponentActivity() {
                 )
             }
             // Play Game Route
-            composable(route = TriviaAppScreens.GameScreen.name) {
+            composable(route = TriviaAppScreens.GameScreen.name,
+                enterTransition = { slideInHorizontally() },
+                exitTransition = { slideOutHorizontally() },
+            ) {
                 val gameResultListener: (Boolean) -> Unit = { result ->
                     if (result) {
                         navigationController.navigate(TriviaAppScreens.GameWonScreen.name)
@@ -233,25 +237,37 @@ class MainActivity : ComponentActivity() {
                 )
             }
             // Game Win Route
-            composable(route = TriviaAppScreens.GameWonScreen.name) {
+            composable(route = TriviaAppScreens.GameWonScreen.name,
+                enterTransition = { slideInHorizontally() },
+                exitTransition = { slideOutHorizontally() }
+            ) {
                 GameWonScreen(
                     // Navigate back to title screen
                     nextMatchListener = { navigateToHomeScreen(viewModel, navigationController) }
                 )
             }
             // Game Over Route
-            composable(route = TriviaAppScreens.GameOverScreen.name) {
+            composable(route = TriviaAppScreens.GameOverScreen.name,
+                enterTransition = { fadeIn() },
+                exitTransition = { fadeOut() }
+            ) {
                 GameOverScreen(
                     // Navigate back to title screen
                     tryAgainListener = { navigateToHomeScreen(viewModel, navigationController) }
                 )
             }
             // About Game Route
-            composable(route = TriviaAppScreens.AboutGameScreen.name) {
+            composable(route = TriviaAppScreens.AboutGameScreen.name,
+                enterTransition = { slideInHorizontally() },
+                exitTransition = { slideOutHorizontally() }
+            ) {
                 AboutGameScreen()
             }
             // Game Rules Route
-            composable(route = TriviaAppScreens.GameRulesScreen.name) {
+            composable(route = TriviaAppScreens.GameRulesScreen.name,
+                enterTransition = { slideInHorizontally() },
+                exitTransition = { slideOutHorizontally() }
+            ) {
                 GameRulesScreen()
             }
         }
@@ -276,19 +292,23 @@ class MainActivity : ComponentActivity() {
     private fun GameTopBar(
         numQuestions: Int,
         navigationController: NavHostController,
-        currentScreenTitle: TriviaAppScreens,
         questionNo: Int,
-        canNavigateBack: Boolean,
         navigateUp: () -> Unit,
         drawerState: DrawerState
     ) {
         var showMenu by remember { mutableStateOf(false) }
         val scope = rememberCoroutineScope()
+        val backStackEntry by navigationController.currentBackStackEntryAsState()
+        val currentScreenTitle = TriviaAppScreens.valueOf(
+            backStackEntry?.destination?.route ?: TriviaAppScreens.GameTitleScreen.name
+        ).title
+        val canNavigateBack = navigationController.previousBackStackEntry != null
+
         TopAppBar(
             title = {
                 Text(
                     text = stringResource(
-                        id = currentScreenTitle.title,
+                        id = currentScreenTitle,
                         formatArgs = arrayOf(questionNo + 1, 3)
                     )
                 )
@@ -327,8 +347,10 @@ class MainActivity : ComponentActivity() {
                         Icon(Icons.Default.Share, contentDescription = "Share")
                     }
                 }
-                IconButton(onClick = { showMenu = !showMenu }) {
-                    Icon(Icons.Default.MoreVert, contentDescription = "More")
+                if (!canNavigateBack) {
+                    IconButton(onClick = { showMenu = !showMenu }) {
+                        Icon(Icons.Default.MoreVert, contentDescription = "More")
+                    }
                 }
                 DropdownMenu(
                     expanded = showMenu,
@@ -404,5 +426,4 @@ class MainActivity : ComponentActivity() {
             )
         }
     }
-
 }
