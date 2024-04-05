@@ -6,33 +6,52 @@ import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.annotation.StringRes
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Share
+import androidx.compose.material3.DrawerState
+import androidx.compose.material3.DrawerValue
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ModalDrawerSheet
+import androidx.compose.material3.ModalNavigationDrawer
+import androidx.compose.material3.NavigationDrawerItem
+import androidx.compose.material3.NavigationDrawerItemDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.material3.rememberDrawerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
@@ -41,6 +60,7 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.example.android.navigation.ui.theme.AndroidTriviaTheme
 import com.example.android.navigation.viewmodels.GameViewModel
+import kotlinx.coroutines.launch
 
 /*
  * enum class to define the routes.
@@ -59,15 +79,87 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         setContent {
             AndroidTriviaTheme {
-                ScaffoldRootContent()
+                RootNavigationDrawer()
             }
         }
     }
 
     @Composable
-    fun ScaffoldRootContent(
+    fun RootNavigationDrawer(
         navigationController: NavHostController = rememberNavController(),
         viewModel: GameViewModel = viewModel()
+    ) {
+        val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
+        ModalNavigationDrawer(
+            drawerContent = {
+                DrawerContent(drawerState, navigationController)
+            },
+            drawerState = drawerState,
+        ) {
+            ScaffoldContent(navigationController, viewModel, drawerState)
+        }
+    }
+
+    @Composable
+    private fun DrawerContent(drawerState: DrawerState, navigationController: NavHostController) {
+        val scope = rememberCoroutineScope()
+        val backStackEntry by navigationController.currentBackStackEntryAsState()
+        ModalDrawerSheet {
+            Spacer(modifier = Modifier.height(26.dp))
+            Image(
+                painter = painterResource(id = R.drawable.about_android_trivia),
+                contentDescription = "",
+                modifier = Modifier
+                    .size(150.dp)
+                    .fillMaxWidth()
+                    .align(Alignment.CenterHorizontally)
+            )
+            Spacer(modifier = Modifier.height(26.dp))
+            data class TriviaNavigationItem(
+                val vectorRes: Int, val stringRes: Int, val route: String
+            )
+
+            val navItems = listOf(
+                TriviaNavigationItem(
+                    stringRes = R.string.rules,
+                    vectorRes = R.drawable.rules,
+                    route = TriviaAppScreens.GameRulesScreen.name
+                ),
+                TriviaNavigationItem(
+                    stringRes = R.string.about,
+                    vectorRes = R.drawable.android,
+                    route = TriviaAppScreens.AboutGameScreen.name
+                )
+            )
+            navItems.forEach {
+                NavigationDrawerItem(
+                    label = {
+                        Text(text = stringResource(id = it.stringRes))
+                    },
+                    selected = backStackEntry?.destination?.route.equals(it.route),
+                    onClick = {
+                        navigationController.navigate(it.route)
+                        scope.launch {
+                            drawerState.close()
+                        }
+                    },
+                    icon = {
+                        Icon(
+                            imageVector = ImageVector.vectorResource(it.vectorRes),
+                            contentDescription = stringResource(id = it.stringRes)
+                        )
+                    }, modifier = Modifier.padding(NavigationDrawerItemDefaults.ItemPadding)
+                )
+                Spacer(modifier = Modifier.height(6.dp))
+            }
+        }
+    }
+
+    @Composable
+    private fun ScaffoldContent(
+        navigationController: NavHostController,
+        viewModel: GameViewModel,
+        drawerState: DrawerState
     ) {
         val backStackEntry by navigationController.currentBackStackEntryAsState()
         val currentScreenTitle = TriviaAppScreens.valueOf(
@@ -85,7 +177,8 @@ class MainActivity : ComponentActivity() {
                     uiState.questionIndex,
                     canNavigateBack,
                     // Add Support for the Up Button
-                    navigateUp = { navigateToHomeScreen(viewModel, navigationController) }
+                    navigateUp = { navigateToHomeScreen(viewModel, navigationController) },
+                    drawerState
                 )
             },
             modifier = Modifier.background(color = Color.Yellow),
@@ -186,9 +279,11 @@ class MainActivity : ComponentActivity() {
         currentScreenTitle: TriviaAppScreens,
         questionNo: Int,
         canNavigateBack: Boolean,
-        navigateUp: () -> Unit
+        navigateUp: () -> Unit,
+        drawerState: DrawerState
     ) {
         var showMenu by remember { mutableStateOf(false) }
+        val scope = rememberCoroutineScope()
         TopAppBar(
             title = {
                 Text(
@@ -211,6 +306,17 @@ class MainActivity : ComponentActivity() {
                             contentDescription = stringResource(id = R.string.back_button)
                         )
                     }
+                } else {
+                    IconButton(onClick = {
+                        scope.launch {
+                            drawerState.open()
+                        }
+                    }) {
+                        Icon(
+                            imageVector = Icons.Filled.Menu,
+                            contentDescription = stringResource(id = R.string.app_name)
+                        )
+                    }
                 }
             },
             actions = {
@@ -229,15 +335,27 @@ class MainActivity : ComponentActivity() {
                     onDismissRequest = { showMenu = false }
                 ) {
                     DropdownMenuItem(
-                        text = { Text(text = "About") },
+                        text = {
+                            Text(
+                                text = stringResource(id = TriviaAppScreens.AboutGameScreen.title)
+                            )
+                        },
                         onClick = {
                             navigationController.navigate(TriviaAppScreens.AboutGameScreen.name)
+                            // collapse the DropdownMenu
+                            showMenu = !showMenu
                         }
                     )
                     DropdownMenuItem(
-                        text = { Text(text = "Rules") },
+                        text = {
+                            Text(
+                                text = stringResource(id = TriviaAppScreens.GameRulesScreen.title)
+                            )
+                        },
                         onClick = {
                             navigationController.navigate(TriviaAppScreens.GameRulesScreen.name)
+                            // collapse the DropdownMenu
+                            showMenu = !showMenu
                         }
                     )
                 }
@@ -260,7 +378,30 @@ class MainActivity : ComponentActivity() {
     @Composable
     fun RootGamePreview() {
         AndroidTriviaTheme {
-            ScaffoldRootContent()
+            RootNavigationDrawer()
+        }
+    }
+
+    @Preview(showBackground = true)
+    @Composable
+    fun ScaffoldContentPreview() {
+        AndroidTriviaTheme {
+            ScaffoldContent(
+                navigationController = rememberNavController(),
+                viewModel = GameViewModel(),
+                rememberDrawerState(initialValue = DrawerValue.Closed)
+            )
+        }
+    }
+
+    @Preview(showBackground = true)
+    @Composable
+    fun DrawerContentPreview() {
+        AndroidTriviaTheme {
+            DrawerContent(
+                rememberDrawerState(initialValue = DrawerValue.Closed),
+                rememberNavController()
+            )
         }
     }
 
